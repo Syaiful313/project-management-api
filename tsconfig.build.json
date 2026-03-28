@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "node_modules",
+    "dist",
+    "express-finpro-boilerplate-main",
+    "prisma.config.ts",
+  ],
+}
