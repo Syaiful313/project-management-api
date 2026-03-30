@@ -14,7 +14,7 @@ export class AuthService {
   ) {}
 
   async register(body: RegisterDTO) {
-    const existing = await this.prisma.user.findUnique({
+    const existing = await this.prisma.users.findUnique({
       where: { email: body.email },
     });
 
@@ -24,9 +24,10 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(body.password, 10);
 
-    const user = await this.prisma.user.create({
+    const user = await this.prisma.users.create({
       data: {
-        name: body.name,
+        firstName: body.firstName,
+        lastName: body.lastName,
         email: body.email,
         password: hashedPassword,
       },
@@ -37,7 +38,7 @@ export class AuthService {
   }
 
   async login(body: LoginDTO) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.users.findUnique({
       where: { email: body.email },
     });
 
@@ -51,14 +52,21 @@ export class AuthService {
       throw new ApiError("Invalid email or password", 401);
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    // Role could be determined differently now since it's not directly on user.
+    // For now we omit role or set it as undefined if it isn't part of the direct user model.
+    const payload = { sub: user.id, email: user.email };
     const accessToken = await this.jwtService.signAsync(payload);
 
-    return { accessToken };
+    const { password, ...userWithoutPassword } = user;
+
+    return {
+      accessToken,
+      user: userWithoutPassword,
+    };
   }
 
-  async getProfile(userId: number) {
-    const user = await this.prisma.user.findUnique({
+  async getProfile(userId: string) {
+    const user = await this.prisma.users.findUnique({
       where: { id: userId },
     });
 

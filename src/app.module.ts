@@ -5,7 +5,6 @@ import { LoggerModule } from "nestjs-pino";
 import { randomUUID } from "crypto";
 import { ApiErrorFilter } from "./common/filters/api-error.filter";
 import { PrismaModule } from "./prisma/prisma.module";
-import { SampleModule } from "./modules/sample/sample.module";
 import { AuthModule } from "./modules/auth/auth.module";
 
 @Module({
@@ -42,7 +41,6 @@ import { AuthModule } from "./modules/auth/auth.module";
       },
     }),
     PrismaModule,
-    SampleModule,
     AuthModule,
   ],
   providers: [

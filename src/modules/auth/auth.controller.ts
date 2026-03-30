@@ -5,7 +5,7 @@ import { LoginDTO } from "./dto/login.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RolesGuard } from "./guards/roles.guard";
 import { Roles } from "./decorators/roles.decorator";
-import { Role } from "../../../generated/prisma/client";
+import { EnumRole } from "../../../generated/prisma/client";
 
 @Controller("auth")
 export class AuthController {
@@ -28,7 +28,7 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
+  @Roles(EnumRole.superAdmin)
   @Get("admin")
   async adminOnly() {
     return { message: "Admin access granted" };
