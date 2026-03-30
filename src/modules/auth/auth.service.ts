@@ -14,7 +14,7 @@ export class AuthService {
   ) {}
 
   async register(body: RegisterDTO) {
-    const existing = await this.prisma.users.findUnique({
+    const existing = await this.prisma.user.findUnique({
       where: { email: body.email },
     });
 
@@ -24,7 +24,7 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(body.password, 10);
 
-    const user = await this.prisma.users.create({
+    const user = await this.prisma.user.create({
       data: {
         firstName: body.firstName,
         lastName: body.lastName,
@@ -38,7 +38,7 @@ export class AuthService {
   }
 
   async login(body: LoginDTO) {
-    const user = await this.prisma.users.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { email: body.email },
     });
 
@@ -66,7 +66,7 @@ export class AuthService {
   }
 
   async getProfile(userId: string) {
-    const user = await this.prisma.users.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 

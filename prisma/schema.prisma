@@ -7,7 +7,27 @@ datasource db {
   provider = "postgresql"
 }
 
-model Users {
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  SUPERVISOR
+  MEMBER
+}
+
+enum Status {
+  DRAFT
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum Frequency {
+  DAILY
+  WEEKLY
+}
+
+model User {
   id         String    @id @default(uuid())
   firstName  String
   lastName   String
@@ -20,155 +40,138 @@ model Users {
 
   groupMembers    GroupMember[]
   requestMembers  RequestMember[]
-  assignedTasks   Tasks[]          @relation("AssignedTasks")
-  approvalsSubmit Approval[]       @relation("SubmitApproval")
-  approvalsReview Approval[]       @relation("ReviewApproval")
-  recurringTasks  RecurringTasks[]
-  projects        Projects[]
+  assignedTasks   Task[]          @relation("AssignedTasks")
+  approvalsSubmit Approval[]      @relation("SubmitApproval")
+  approvalsReview Approval[]      @relation("ReviewApproval")
+  recurringTasks  RecurringTask[]
+  projects        Project[]       @relation("ProjectPIC")
+
+  @@map("users")
 }
 
-model Projects {
-  id             String         @id @default(uuid())
+model Project {
+  id             String    @id @default(uuid())
   projectName    String
   description    String
   coverImage     String?
-  progressStatus ProgressStatus
+  progressStatus Status    @default(DRAFT)
   overviews      String?
   picId          String
-  groupId        String?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
-  pic   Users   @relation(fields: [picId], references: [id])
-  group Groups? @relation("ProjectToGroup", fields: [groupId], references: [id])
-
+  pic            User            @relation("ProjectPIC", fields: [picId], references: [id])
+  groups         Group[]
+  tasks          Task[]
   requestMembers RequestMember[]
-  groups         Groups[]        @relation("GroupToProject")
-  tasks          Tasks[]
+
+  @@map("projects")
 }
 
-enum ProgressStatus {
-  draf
-  todo
-  inProgress
-  riview
-  done
-}
+model Group {
+  id        String    @id @default(uuid())
+  title     String
+  projectId String
+  totalKpi  Int?
+  isStrict  Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-model Groups {
-  id          String    @id @default(uuid())
-  title       String
-  projectId   String
-  groupMember String?
-  totalKpi    Int?
-  isStrict    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-
-  project        Projects         @relation("GroupToProject", fields: [projectId], references: [id])
-  mainProjects   Projects[]       @relation("ProjectToGroup")
-  recurringTasks RecurringTasks[]
-  tasks          Tasks[]
+  project        Project         @relation(fields: [projectId], references: [id])
+  recurringTasks RecurringTask[]
+  tasks          Task[]
   members        GroupMember[]
+
+  @@map("groups")
 }
 
 model GroupMember {
   id        String    @id @default(uuid())
   userId    String
   groupId   String
-  role      EnumRole
+  role      Role
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  user  Users  @relation(fields: [userId], references: [id])
-  group Groups @relation(fields: [groupId], references: [id])
-}
+  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
 
-enum EnumRole {
-  superAdmin
-  admin
-  superVisi
-  member
+  @@map("group_members")
 }
 
 model RequestMember {
   id        String    @id @default(uuid())
   userId    String
   projectId String
-  role      EnumRole
+  role      Role
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  user    Users    @relation(fields: [userId], references: [id])
-  project Projects @relation(fields: [projectId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@map("request_members")
 }
 
-model Tasks {
-  id            String     @id @default(uuid())
+model Task {
+  id            String    @id @default(uuid())
   projectId     String
   groupId       String?
   title         String
   description   String?
-  taskStatus    TaskStatus
+  status        Status    @default(TODO)
   priorityLevel Int?
   assigneeId    String
   startDate     DateTime?
   dueDate       DateTime?
   taskActivity  String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
 
-  project  Projects @relation(fields: [projectId], references: [id])
-  group    Groups?  @relation(fields: [groupId], references: [id])
-  assignee Users    @relation("AssignedTasks", fields: [assigneeId], references: [id])
+  project  Project @relation(fields: [projectId], references: [id])
+  group    Group?  @relation(fields: [groupId], references: [id])
+  assignee User    @relation("AssignedTasks", fields: [assigneeId], references: [id])
 
   approvals Approval[]
+
+  @@map("tasks")
 }
 
-enum TaskStatus {
-  draf
-  todo
-  inProgress
-  riview
-  done
-}
-
-model RecurringTasks {
-  id        String        @id @default(uuid())
+model RecurringTask {
+  id        String    @id @default(uuid())
   name      String
   assignTo  String
   groupId   String
-  frequency FrequencyOpsi
+  frequency Frequency
   interval  Int
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  deletedAt DateTime?
-
-  user  Users  @relation(fields: [assignTo], references: [id])
-  group Groups @relation(fields: [groupId], references: [id])
-}
-
-enum FrequencyOpsi {
-  daily
-  weekly
-}
-
-model Approval {
-  id        String    @id @default(uuid())
-  taskId    String
-  submitBy  String
-  isAproof  Boolean   @default(false)
-  reviewBy  String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  task   Tasks  @relation(fields: [taskId], references: [id])
-  submit Users  @relation("SubmitApproval", fields: [submitBy], references: [id])
-  review Users? @relation("ReviewApproval", fields: [reviewBy], references: [id])
+  user  User  @relation(fields: [assignTo], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
+
+  @@map("recurring_tasks")
+}
+
+model Approval {
+  id         String    @id @default(uuid())
+  taskId     String
+  submitById String
+  isApproved Boolean   @default(false)
+  reviewById String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+
+  task   Task  @relation(fields: [taskId], references: [id])
+  submit User  @relation("SubmitApproval", fields: [submitById], references: [id])
+  review User? @relation("ReviewApproval", fields: [reviewById], references: [id])
+
+  @@map("approvals")
 }
