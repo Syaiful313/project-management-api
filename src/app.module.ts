@@ -10,6 +10,7 @@ import { ProjectsModule } from "./modules/projects/projects.module";
 import { GroupsModule } from "./modules/groups/groups.module";
 import { RequestMembersModule } from "./modules/request-members/request-members.module";
 import { GroupMembersModule } from "./modules/group-members/group-members.module";
+import { TasksModule } from "./modules/tasks/tasks.module";
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { GroupMembersModule } from "./modules/group-members/group-members.module
     GroupsModule,
     RequestMembersModule,
     GroupMembersModule,
+    TasksModule,
   ],
   providers: [
     {
