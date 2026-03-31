@@ -8,6 +8,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ProjectsModule } from "./modules/projects/projects.module";
 import { GroupsModule } from "./modules/groups/groups.module";
+import { RequestMembersModule } from "./modules/request-members/request-members.module";
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { GroupsModule } from "./modules/groups/groups.module";
     AuthModule,
     ProjectsModule,
     GroupsModule,
+    RequestMembersModule,
   ],
   providers: [
     {
