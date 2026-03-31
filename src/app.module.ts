@@ -11,6 +11,7 @@ import { GroupsModule } from "./modules/groups/groups.module";
 import { RequestMembersModule } from "./modules/request-members/request-members.module";
 import { GroupMembersModule } from "./modules/group-members/group-members.module";
 import { TasksModule } from "./modules/tasks/tasks.module";
+import { ApprovalsModule } from "./modules/approvals/approvals.module";
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { TasksModule } from "./modules/tasks/tasks.module";
     RequestMembersModule,
     GroupMembersModule,
     TasksModule,
+    ApprovalsModule,
   ],
   providers: [
     {
