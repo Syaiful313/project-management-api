@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 import { ApiErrorFilter } from "./common/filters/api-error.filter";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
+import { ProjectsModule } from "./modules/projects/projects.module";
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { AuthModule } from "./modules/auth/auth.module";
     }),
     PrismaModule,
     AuthModule,
+    ProjectsModule,
   ],
   providers: [
     {

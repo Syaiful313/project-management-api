@@ -60,8 +60,8 @@ export class AuthService {
     const { password, ...userWithoutPassword } = user;
 
     return {
-      accessToken,
       user: userWithoutPassword,
+      accessToken,
     };
   }
 
