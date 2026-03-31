@@ -7,6 +7,7 @@ import { ApiErrorFilter } from "./common/filters/api-error.filter";
 import { PrismaModule } from "./prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ProjectsModule } from "./modules/projects/projects.module";
+import { GroupsModule } from "./modules/groups/groups.module";
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ProjectsModule } from "./modules/projects/projects.module";
     PrismaModule,
     AuthModule,
     ProjectsModule,
+    GroupsModule,
   ],
   providers: [
     {
