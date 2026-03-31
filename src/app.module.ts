@@ -9,6 +9,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 import { ProjectsModule } from "./modules/projects/projects.module";
 import { GroupsModule } from "./modules/groups/groups.module";
 import { RequestMembersModule } from "./modules/request-members/request-members.module";
+import { GroupMembersModule } from "./modules/group-members/group-members.module";
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { RequestMembersModule } from "./modules/request-members/request-members.
     ProjectsModule,
     GroupsModule,
     RequestMembersModule,
+    GroupMembersModule,
   ],
   providers: [
     {
