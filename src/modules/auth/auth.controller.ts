@@ -1,16 +1,18 @@
-import { Body, Controller, Get, Post, UseGuards, Req } from "@nestjs/common";
+import { Body, Controller, Get, Post, Req, UseGuards } from "@nestjs/common";
+import { SystemRole } from "../../../generated/prisma/client";
 import { AuthService } from "./auth.service";
-import { RegisterDTO } from "./dto/register.dto";
+import { Roles } from "./decorators/roles.decorator";
 import { LoginDTO } from "./dto/login.dto";
+import { RegisterDTO } from "./dto/register.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RolesGuard } from "./guards/roles.guard";
-import { Roles } from "./decorators/roles.decorator";
-import { SystemRole } from "../../../generated/prisma/client";
 
 @Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(SystemRole.SUPER_ADMIN)
   @Post("register")
   async register(@Body() body: RegisterDTO) {
     return await this.authService.register(body);
