@@ -7,15 +7,14 @@ import { PrismaService } from "../../prisma/prisma.service";
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(createProjectDto: CreateProjectDto, ownerId: string) {
-    const { projectName, description, deadline, picId } = createProjectDto;
+  create(createProjectDto: CreateProjectDto, creatorId: string) {
+    const { projectName, description, deadline } = createProjectDto;
     return this.prisma.project.create({
       data: {
         projectName,
         description: description ?? "",
         deadline: new Date(deadline),
-        ownerId,
-        picId,
+        creatorId,
       },
     });
   }
@@ -23,7 +22,7 @@ export class ProjectsService {
   findAll() {
     return this.prisma.project.findMany({
       include: {
-        owner: {
+        creator: {
           select: {
             firstName: true,
             lastName: true,
@@ -37,8 +36,7 @@ export class ProjectsService {
     return this.prisma.project.findUnique({
       where: { id },
       include: {
-        owner: true,
-        pic: true,
+        creator: true,
       },
     });
   }

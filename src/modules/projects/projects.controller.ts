@@ -17,9 +17,9 @@ export class ProjectsController {
 
   @Post()
   create(@Body() createProjectDto: CreateProjectDto) {
-    // TODO: Get ownerId from authenticated user (e.g., from request or a custom decorator)
-    const ownerId = "c5c8a3c8-3e5f-4222-a7d0-1b2c3d4e5f6a"; // Placeholder user ID
-    return this.projectsService.create(createProjectDto, ownerId);
+    // TODO: Get creatorId from authenticated user (e.g., from request or a custom decorator)
+    const creatorId = "c5c8a3c8-3e5f-4222-a7d0-1b2c3d4e5f6a"; // Placeholder user ID
+    return this.projectsService.create(createProjectDto, creatorId);
   }
 
   @Get()

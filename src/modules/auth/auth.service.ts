@@ -52,9 +52,7 @@ export class AuthService {
       throw new ApiError("Invalid email or password", 401);
     }
 
-    // Role could be determined differently now since it's not directly on user.
-    // For now we omit role or set it as undefined if it isn't part of the direct user model.
-    const payload = { sub: user.id, email: user.email };
+    const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = await this.jwtService.signAsync(payload);
 
     const { password, ...userWithoutPassword } = user;

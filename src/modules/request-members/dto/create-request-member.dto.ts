@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsUUID } from "class-validator";
-import { Role } from "../../../../generated/prisma/client";
+import { ProjectRole } from "../../../../generated/prisma/client";
 
 export class CreateRequestMemberDto {
   @IsUUID()
@@ -10,7 +10,7 @@ export class CreateRequestMemberDto {
   @IsNotEmpty()
   projectId!: string;
 
-  @IsEnum(Role)
+  @IsEnum(ProjectRole)
   @IsNotEmpty()
-  role!: Role;
+  role!: ProjectRole;
 }

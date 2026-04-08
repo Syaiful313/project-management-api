@@ -7,47 +7,33 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  SUPER_ADMIN
-  ADMIN
-  SUPERVISOR
-  MEMBER
-}
-
-enum Status {
-  DRAFT
-  TODO
-  IN_PROGRESS
-  REVIEW
-  DONE
-}
-
-enum Frequency {
-  DAILY
-  WEEKLY
-}
-
 model User {
-  id         String    @id @default(uuid())
+  id         String     @id @default(uuid())
   firstName  String
   lastName   String
-  email      String    @unique
+  email      String     @unique
   password   String
-  isVerified Boolean   @default(false)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  role       SystemRole @default(USER)
+  isVerified Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
   deletedAt  DateTime?
 
   groupMembers    GroupMember[]
+  projectMembers  ProjectMember[]
   requestMembers  RequestMember[]
   assignedTasks   Task[]          @relation("AssignedTasks")
   approvalsSubmit Approval[]      @relation("SubmitApproval")
   approvalsReview Approval[]      @relation("ReviewApproval")
   recurringTasks  RecurringTask[]
-  projects        Project[]       @relation("ProjectPIC")
-  ownedProjects   Project[]       @relation("ProjectOwner")
+  createdProjects Project[]       @relation("ProjectCreator")
 
   @@map("users")
+}
+
+enum SystemRole {
+  SUPER_ADMIN
+  USER
 }
 
 model Project {
@@ -57,20 +43,27 @@ model Project {
   coverImage     String?
   progressStatus Status    @default(DRAFT)
   overviews      String?
-  ownerId        String
-  picId          String?
+  creatorId      String
   deadline       DateTime
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
-  owner          User            @relation("ProjectOwner", fields: [ownerId], references: [id])
-  pic            User?           @relation("ProjectPIC", fields: [picId], references: [id])
+  creator        User            @relation("ProjectCreator", fields: [creatorId], references: [id])
+  members        ProjectMember[]
   groups         Group[]
   tasks          Task[]
   requestMembers RequestMember[]
 
   @@map("projects")
+}
+
+enum Status {
+  DRAFT
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
 }
 
 model Group {
@@ -87,6 +80,7 @@ model Group {
   recurringTasks RecurringTask[]
   tasks          Task[]
   members        GroupMember[]
+  requestMembers RequestMember[]
 
   @@map("groups")
 }
@@ -95,7 +89,7 @@ model GroupMember {
   id        String    @id @default(uuid())
   userId    String
   groupId   String
-  role      Role
+  role      GroupRole
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -106,19 +100,57 @@ model GroupMember {
   @@map("group_members")
 }
 
-model RequestMember {
-  id        String    @id @default(uuid())
+enum GroupRole {
+  ADMIN
+  SUPERVISOR
+  MEMBER
+}
+
+model ProjectMember {
+  id        String      @id @default(uuid())
   userId    String
   projectId String
-  role      Role
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  role      ProjectRole
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
   deletedAt DateTime?
 
   user    User    @relation(fields: [userId], references: [id])
   project Project @relation(fields: [projectId], references: [id])
 
+  @@map("project_members")
+}
+
+enum ProjectRole {
+  OWNER
+  PIC
+  MEMBER
+  VIEWER
+}
+
+model RequestMember {
+  id          String        @id @default(uuid())
+  userId      String
+  projectId   String?
+  groupId     String?
+  projectRole ProjectRole?
+  groupRole   GroupRole?
+  status      RequestStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  user    User     @relation(fields: [userId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+  group   Group?   @relation(fields: [groupId], references: [id])
+
   @@map("request_members")
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model Task {
@@ -161,6 +193,11 @@ model RecurringTask {
   group Group @relation(fields: [groupId], references: [id])
 
   @@map("recurring_tasks")
+}
+
+enum Frequency {
+  DAILY
+  WEEKLY
 }
 
 model Approval {

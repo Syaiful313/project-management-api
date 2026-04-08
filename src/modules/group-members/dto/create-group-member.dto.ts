@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsUUID } from "class-validator";
-import { Role } from "../../../../generated/prisma/client";
+import { GroupRole } from "../../../../generated/prisma/client";
 
 export class CreateGroupMemberDto {
   @IsUUID()
@@ -10,7 +10,7 @@ export class CreateGroupMemberDto {
   @IsNotEmpty()
   groupId!: string;
 
-  @IsEnum(Role)
+  @IsEnum(GroupRole)
   @IsNotEmpty()
-  role!: Role;
+  role!: GroupRole;
 }
