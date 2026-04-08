@@ -15,6 +15,7 @@ import { TasksModule } from "./modules/tasks/tasks.module";
 import { ApprovalsModule } from "./modules/approvals/approvals.module";
 import { RecurringTasksModule } from "./modules/recurring-tasks/recurring-tasks.module";
 import { UsersModule } from "./modules/users/users.module";
+import { ProjectMembersModule } from "./modules/project-members/project-members.module";
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { UsersModule } from "./modules/users/users.module";
     ApprovalsModule,
     RecurringTasksModule,
     UsersModule,
+    ProjectMembersModule,
   ],
   providers: [
     {
