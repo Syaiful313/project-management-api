@@ -8,22 +8,20 @@ export class GroupsService {
   constructor(private readonly prisma: PrismaService) {}
 
   create(createGroupDto: CreateGroupDto) {
-    const { title, projectId, totalKpi, isStrict } = createGroupDto;
+    const { title, totalKpi, isStrict } = createGroupDto;
     return this.prisma.group.create({
       data: {
         title,
-        projectId,
         totalKpi,
         isStrict: isStrict ?? false,
       },
     });
   }
 
-  findAll(projectId?: string) {
+  findAll() {
     return this.prisma.group.findMany({
-      where: projectId ? { projectId } : undefined,
       include: {
-        project: {
+        projects: {
           select: {
             projectName: true,
           },
@@ -39,7 +37,7 @@ export class GroupsService {
     return this.prisma.group.findUnique({
       where: { id },
       include: {
-        project: true,
+        projects: true,
         members: {
           include: {
             user: {

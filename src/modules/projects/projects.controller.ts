@@ -1,44 +1,55 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
 } from "@nestjs/common";
-import { ProjectsService } from "./projects.service";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CreateProjectDto } from "./dto/create-project.dto";
 import { UpdateProjectDto } from "./dto/update-project.dto";
+import { ProjectsService } from "./projects.service";
 
+@UseGuards(JwtAuthGuard)
 @Controller("projects")
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
   @Post()
-  create(@Body() createProjectDto: CreateProjectDto) {
-    // TODO: Get creatorId from authenticated user (e.g., from request or a custom decorator)
-    const creatorId = "c5c8a3c8-3e5f-4222-a7d0-1b2c3d4e5f6a"; // Placeholder user ID
-    return this.projectsService.create(createProjectDto, creatorId);
+  create(@Body() createProjectDto: CreateProjectDto, @Req() req: any) {
+    return this.projectsService.create(createProjectDto, req.user);
   }
 
   @Get()
-  findAll() {
-    return this.projectsService.findAll();
+  findAll(@Req() req: any) {
+    return this.projectsService.findAll(req.user);
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.projectsService.findOne(id);
+  findOne(@Param("id") id: string, @Req() req: any) {
+    return this.projectsService.findOne(id, req.user);
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() updateProjectDto: UpdateProjectDto) {
-    return this.projectsService.update(id, updateProjectDto);
+  update(
+    @Param("id") id: string,
+    @Body() updateProjectDto: UpdateProjectDto,
+    @Req() req: any,
+  ) {
+    return this.projectsService.update(id, updateProjectDto, req.user);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.projectsService.remove(id);
+  remove(@Param("id") id: string, @Req() req: any) {
+    return this.projectsService.remove(id, req.user);
+  }
+
+  @Post(":id/duplicate")
+  duplicate(@Param("id") id: string, @Req() req: any) {
+    return this.projectsService.duplicate(id, req.user);
   }
 }

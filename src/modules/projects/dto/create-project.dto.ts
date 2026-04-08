@@ -7,6 +7,10 @@ import {
 } from "class-validator";
 
 export class CreateProjectDto {
+  @IsUUID()
+  @IsNotEmpty()
+  groupId!: string;
+
   @IsString()
   @IsNotEmpty()
   projectName!: string;
@@ -18,8 +22,4 @@ export class CreateProjectDto {
   @IsDateString()
   @IsNotEmpty()
   deadline!: string;
-
-  @IsUUID()
-  @IsOptional()
-  picId?: string;
 }

@@ -38,6 +38,7 @@ enum SystemRole {
 
 model Project {
   id             String    @id @default(uuid())
+  groupId        String
   projectName    String
   description    String
   coverImage     String?
@@ -49,9 +50,9 @@ model Project {
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
 
+  group          Group           @relation(fields: [groupId], references: [id])
   creator        User            @relation("ProjectCreator", fields: [creatorId], references: [id])
   members        ProjectMember[]
-  groups         Group[]
   tasks          Task[]
   requestMembers RequestMember[]
 
@@ -69,14 +70,13 @@ enum Status {
 model Group {
   id        String    @id @default(uuid())
   title     String
-  projectId String
   totalKpi  Int?
   isStrict  Boolean   @default(false)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  project        Project         @relation(fields: [projectId], references: [id])
+  projects       Project[]
   recurringTasks RecurringTask[]
   tasks          Task[]
   members        GroupMember[]

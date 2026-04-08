@@ -22,8 +22,8 @@ export class GroupsController {
   }
 
   @Get()
-  findAll(@Query("projectId") projectId?: string) {
-    return this.groupsService.findAll(projectId);
+  findAll() {
+    return this.groupsService.findAll();
   }
 
   @Get(":id")
