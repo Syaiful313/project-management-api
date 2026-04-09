@@ -30,6 +30,7 @@ export class AuthService {
         lastName: body.lastName,
         email: body.email,
         password: hashedPassword,
+        role: body.role, // Akan menggunakan default dari schema jika undefined
       },
     });
 
