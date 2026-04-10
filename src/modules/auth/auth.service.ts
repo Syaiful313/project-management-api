@@ -56,10 +56,19 @@ export class AuthService {
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = await this.jwtService.signAsync(payload);
 
+    // Ambil data membership grup untuk mendapatkan role di grup
+    const membership = await this.prisma.groupMember.findFirst({
+      where: { userId: user.id, deletedAt: null },
+      select: { role: true },
+    });
+
     const { password, ...userWithoutPassword } = user;
 
     return {
-      user: userWithoutPassword,
+      user: {
+        ...userWithoutPassword,
+        groupRole: membership?.role || null,
+      },
       accessToken,
     };
   }

@@ -19,28 +19,42 @@ export class ProjectsService {
       throw new ApiError("Super admin cannot create project", 403);
     }
 
-    const { groupId, projectName, description, deadline } = createProjectDto;
+    const { projectName, description, deadline, isForAdmin } = createProjectDto;
 
-    const group = await this.prisma.group.findFirst({
-      where: { id: groupId, deletedAt: null },
-    });
-
-    if (!group) throw new ApiError("Group not found", 404);
-
-    const groupMember = await this.prisma.groupMember.findFirst({
+    // Otomatis cari group di mana user adalah Admin/Supervisor
+    const userGroup = await this.prisma.groupMember.findFirst({
       where: {
         userId: user.sub,
-        groupId,
         role: { in: [GroupRole.ADMIN, GroupRole.SUPERVISOR] },
         deletedAt: null,
       },
+      select: { groupId: true, role: true },
     });
 
-    if (!groupMember) {
+    if (!userGroup) {
       throw new ApiError(
-        "User must be an admin or supervisor in the division",
+        `User (${user.sub}) does not belong to any group as Admin/Supervisor`,
         403,
       );
+    }
+
+    const groupId = userGroup.groupId;
+    let ownerId = user.sub;
+
+    // Jika pembuat adalah Supervisor dan memilih untuk Admin, cari Admin grup tersebut
+    if (userGroup.role === GroupRole.SUPERVISOR && isForAdmin) {
+      const groupAdmin = await this.prisma.groupMember.findFirst({
+        where: {
+          groupId,
+          role: GroupRole.ADMIN,
+          deletedAt: null,
+        },
+        select: { userId: true },
+      });
+
+      if (groupAdmin) {
+        ownerId = groupAdmin.userId;
+      }
     }
 
     const project = await this.prisma.project.create({
@@ -56,7 +70,7 @@ export class ProjectsService {
 
     await this.prisma.projectMember.create({
       data: {
-        userId: user.sub,
+        userId: ownerId,
         projectId: project.id,
         role: ProjectRole.OWNER,
       },
@@ -67,18 +81,16 @@ export class ProjectsService {
 
   async findAll(user: any) {
     if (user.role === SystemRole.SUPER_ADMIN) {
-      return this.prisma.project.findMany({ where: { deletedAt: null } });
+      return this.prisma.project.findMany({
+        where: { deletedAt: null },
+        include: {
+          members: {
+            where: { role: ProjectRole.OWNER, deletedAt: null },
+            include: { user: { select: { firstName: true, lastName: true } } },
+          },
+        },
+      });
     }
-
-    const adminGroups = await this.prisma.groupMember.findMany({
-      where: {
-        userId: user.sub,
-        role: { in: [GroupRole.ADMIN, GroupRole.SUPERVISOR] },
-        deletedAt: null,
-      },
-      select: { groupId: true },
-    });
-    const adminGroupIds = adminGroups.map((g) => g.groupId);
 
     const projectMemberships = await this.prisma.projectMember.findMany({
       where: { userId: user.sub, deletedAt: null },
@@ -88,11 +100,14 @@ export class ProjectsService {
 
     return this.prisma.project.findMany({
       where: {
+        id: { in: memberProjectIds },
         deletedAt: null,
-        OR: [
-          { groupId: { in: adminGroupIds } },
-          { id: { in: memberProjectIds } },
-        ],
+      },
+      include: {
+        members: {
+          where: { role: ProjectRole.OWNER, deletedAt: null },
+          include: { user: { select: { firstName: true, lastName: true } } },
+        },
       },
     });
   }
@@ -100,6 +115,15 @@ export class ProjectsService {
   async findOne(id: string, user: any) {
     const project = await this.prisma.project.findFirst({
       where: { id, deletedAt: null },
+      include: {
+        members: {
+          where: { deletedAt: null },
+          include: {
+            user: { select: { firstName: true, lastName: true, email: true } },
+          },
+        },
+        creator: { select: { firstName: true, lastName: true } },
+      },
     });
 
     if (!project) throw new ApiError("Project not found", 404);
@@ -108,24 +132,7 @@ export class ProjectsService {
       return project;
     }
 
-    const isGroupAdmin = await this.prisma.groupMember.findFirst({
-      where: {
-        userId: user.sub,
-        groupId: project.groupId,
-        role: { in: [GroupRole.ADMIN, GroupRole.SUPERVISOR] },
-        deletedAt: null,
-      },
-    });
-
-    if (isGroupAdmin) return project;
-
-    const isProjectMember = await this.prisma.projectMember.findFirst({
-      where: {
-        userId: user.sub,
-        projectId: id,
-        deletedAt: null,
-      },
-    });
+    const isProjectMember = project.members.some((m) => m.userId === user.sub);
 
     if (isProjectMember) return project;
 

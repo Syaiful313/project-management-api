@@ -1,16 +1,12 @@
 import {
+  IsBoolean,
   IsDateString,
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUUID,
 } from "class-validator";
 
 export class CreateProjectDto {
-  @IsUUID()
-  @IsNotEmpty()
-  groupId!: string;
-
   @IsString()
   @IsNotEmpty()
   projectName!: string;
@@ -22,4 +18,8 @@ export class CreateProjectDto {
   @IsDateString()
   @IsNotEmpty()
   deadline!: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isForAdmin?: boolean;
 }
