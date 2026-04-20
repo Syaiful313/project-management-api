@@ -1,12 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import { PrismaService } from "../../prisma/prisma.service";
-import { ApiError } from "../../common/exceptions/api-error.exception";
 import {
-  SystemRole,
-  GroupRole,
   ProjectRole,
   Status,
+  SystemRole,
 } from "../../../generated/prisma/client";
+import { ApiError } from "../../common/exceptions/api-error.exception";
+import { PrismaService } from "../../prisma/prisma.service";
 import { AddProjectMemberDto } from "./dto/add-project-member.dto";
 import { UpdateProjectMemberDto } from "./dto/update-project-member.dto";
 
@@ -14,43 +13,43 @@ import { UpdateProjectMemberDto } from "./dto/update-project-member.dto";
 export class ProjectMembersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Helper untuk mengecek apakah user memiliki hak akses (Admin/Supervisor) di grup/divisi yang menaungi project
-  private async checkGroupAdminOrSupervisor(userId: string, groupId: string) {
-    const groupMember = await this.prisma.groupMember.findFirst({
+  // Helper untuk mengecek apakah user adalah OWNER atau PIC dalam project ini
+  private async checkProjectOwnerOrPic(userId: string, projectId: string) {
+    const projectMember = await this.prisma.projectMember.findFirst({
       where: {
         userId,
-        groupId,
-        role: { in: [GroupRole.ADMIN, GroupRole.SUPERVISOR] },
+        projectId,
+        role: { in: [ProjectRole.OWNER, ProjectRole.PIC] },
         deletedAt: null,
       },
     });
 
-    if (!groupMember) {
+    if (!projectMember) {
       throw new ApiError(
-        "Forbidden: You must be an ADMIN or SUPERVISOR in this division",
+        "Forbidden: You must be an OWNER or PIC in this project",
         403,
       );
     }
-    return groupMember;
+    return projectMember;
   }
 
-  // Helper untuk mengecek apakah user berada di grup/divisi project (Admin/Supervisor/Member)
-  private async checkGroupMember(userId: string, groupId: string) {
-    const groupMember = await this.prisma.groupMember.findFirst({
+  // Helper untuk mengecek apakah user adalah bagian dari project
+  private async checkProjectMember(userId: string, projectId: string) {
+    const projectMember = await this.prisma.projectMember.findFirst({
       where: {
         userId,
-        groupId,
+        projectId,
         deletedAt: null,
       },
     });
 
-    if (!groupMember) {
+    if (!projectMember) {
       throw new ApiError(
-        "Forbidden: You are not a member of this division",
+        "Forbidden: You are not a member of this project",
         403,
       );
     }
-    return groupMember;
+    return projectMember;
   }
 
   async findAll(projectId: string, user: any) {
@@ -70,8 +69,8 @@ export class ProjectMembersService {
       });
     }
 
-    // Untuk Admin / Supervisor / Member: cek apakah mereka ada di divisi project
-    await this.checkGroupMember(user.sub, project.groupId);
+    // Untuk role selain SUPER_ADMIN: cek apakah mereka ada di dalam project
+    await this.checkProjectMember(user.sub, projectId);
 
     return this.prisma.projectMember.findMany({
       where: { projectId, deletedAt: null },
@@ -90,8 +89,8 @@ export class ProjectMembersService {
     if (!project) throw new ApiError("Project not found", 404);
 
     if (user.role !== SystemRole.SUPER_ADMIN) {
-      // Untuk Admin / Supervisor / Member: cek apakah mereka ada di divisi project
-      await this.checkGroupMember(user.sub, project.groupId);
+      // Untuk role selain SUPER_ADMIN: cek apakah mereka ada di dalam project
+      await this.checkProjectMember(user.sub, projectId);
     }
 
     const member = await this.prisma.projectMember.findFirst({
@@ -117,8 +116,8 @@ export class ProjectMembersService {
     });
     if (!project) throw new ApiError("Project not found", 404);
 
-    // Executor harus Admin / Supervisor di divisi
-    await this.checkGroupAdminOrSupervisor(user.sub, project.groupId);
+    // Executor harus Owner / PIC di dalam project
+    await this.checkProjectOwnerOrPic(user.sub, projectId);
 
     // Member yang ditambahkan HARUS ada di divisi yang sama
     const targetGroupMember = await this.prisma.groupMember.findFirst({
@@ -165,8 +164,8 @@ export class ProjectMembersService {
     });
     if (!project) throw new ApiError("Project not found", 404);
 
-    // Executor harus Admin / Supervisor di divisi
-    await this.checkGroupAdminOrSupervisor(user.sub, project.groupId);
+    // Executor harus Owner / PIC di dalam project
+    await this.checkProjectOwnerOrPic(user.sub, projectId);
 
     const member = await this.prisma.projectMember.findFirst({
       where: { id: memberId, projectId, deletedAt: null },
@@ -191,8 +190,8 @@ export class ProjectMembersService {
     });
     if (!project) throw new ApiError("Project not found", 404);
 
-    // Executor harus Admin / Supervisor di divisi
-    await this.checkGroupAdminOrSupervisor(user.sub, project.groupId);
+    // Executor harus Owner / PIC di dalam project
+    await this.checkProjectOwnerOrPic(user.sub, projectId);
 
     const projectMember = await this.prisma.projectMember.findFirst({
       where: { id: memberId, projectId, deletedAt: null },
@@ -215,26 +214,6 @@ export class ProjectMembersService {
     if (activeTasksCount > 0) {
       throw new ApiError(
         "Cannot delete member: Please reassign or complete their active tasks first.",
-        400,
-      );
-    }
-
-    // 2. Cek apakah user masih ada di Scuto dan masih ada di divisi (sesuai instruksi)
-    const isUserSoftDeleted = targetUser.deletedAt !== null;
-
-    const targetGroupMember = await this.prisma.groupMember.findFirst({
-      where: {
-        userId: targetUser.id,
-        groupId: project.groupId,
-        deletedAt: null,
-      },
-    });
-    const isUserStillInDivison = !!targetGroupMember;
-
-    // Hanya bisa di-delete JIKA user sudah tidak ada di scuto ATAU pindah/tidak ada di divisi.
-    if (!isUserSoftDeleted && isUserStillInDivison) {
-      throw new ApiError(
-        "Cannot delete member: User is still active and belongs to this division.",
         400,
       );
     }
