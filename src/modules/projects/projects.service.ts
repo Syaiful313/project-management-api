@@ -170,7 +170,8 @@ export class ProjectsService {
       );
     }
 
-    const { projectName, description, deadline } = updateProjectDto;
+    const { projectName, description, deadline, progressStatus } =
+      updateProjectDto;
 
     return this.prisma.project.update({
       where: { id },
@@ -178,6 +179,7 @@ export class ProjectsService {
         ...(projectName && { projectName }),
         ...(description !== undefined && { description }),
         ...(deadline && { deadline: new Date(deadline) }),
+        ...(progressStatus && { progressStatus }),
       },
     });
   }
